@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\History;
 use Illuminate\Http\Request;
+use Jenssegers\Agent\Agent;
 
 class ApiController extends Controller
 {
@@ -11,6 +13,11 @@ class ApiController extends Controller
     {
 
         $url = $request->input('url');
+
+        // Ensure URL is not empty
+        if (empty($url)) {
+            return response()->json(['error' => 'URL is required'], 400);
+        }
 
         $curl = curl_init();
 
@@ -24,7 +31,7 @@ class ApiController extends Controller
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => [
                 "x-rapidapi-host: spotify-downloader9.p.rapidapi.com",
-                "x-rapidapi-key: 42f503244cmsh53f60704eda2911p158869jsnd555cbfa525f"
+                "x-rapidapi-key: 19712ae800msh39302756eeef1abp1b8019jsnc7967b2210ac"
             ],
         ]);
 
@@ -34,7 +41,9 @@ class ApiController extends Controller
         curl_close($curl);
 
         if ($err) {
-            echo "cURL Error #:" . $err;
+            // echo "cURL Error #:" . $err;
+
+            return response()->json(['error' => 'cURL Error #:' . $err]);
         } else {
             $data = json_decode($response, true);
 
@@ -46,9 +55,10 @@ class ApiController extends Controller
                 $downloadLink = $data['data']['downloadLink'];
 
                 return view('home', compact('artist', 'title', 'cover', 'downloadLink'));
+
             } else {
-                return view('home', ['error' => 'Invalid URL']);
-            }return redirect()->back()->with('error', 'Failed to retrieve data');
+                return redirect()->back()->with('error', 'Could not fetch song');
+            }
         }
     }
 }

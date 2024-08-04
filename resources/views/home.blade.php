@@ -22,9 +22,31 @@
             font-family: 'Poppins', sans-serif;
         }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="mb-4">
+
+    @if (session('error'))
+        <script>
+            const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                }
+            });
+            Toast.fire({
+                icon: "error",
+                title: "{{ session('error') }}"
+            });
+        </script>
+    @endif
 
     <div class="container d-flex justify-content-center align-items-center">
         <div class="text-center">
@@ -36,42 +58,77 @@
                 <div class="input-group mb-3" data-bs-theme="dark">
                     <input type="text" class="form-control shadow-none rounded-0"
                         placeholder="Paste Spotify Playlist URL" style="font-size: 15px;"
-                        aria-label="Recipient's username" aria-describedby="button-addon2" name="url" @required(true)>
+                        aria-label="Recipient's username" id="spotify-url" aria-describedby="button-addon2"
+                        name="url" @required(true)>
 
                     <button class="btn btn-outline-secondary border-0 rounded-0" type="submit" id="button-addon2"><i
                             class="fa fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
+
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="pasteClipboard()">Paste from
+                    Clipboard</button>
             </form>
         </div>
 
     </div>
 
     <div class="container">
-        <div class="mt-5">
-            @unless (empty($downloadLink))
-                <div class="row m-auto text-center border p-2 rounded mt-2">
-                    <div class="col-xl-3">
-                        <img src="{{ $cover }}" class="img-fluid w-25 rounded-circle" alt="">
-                    </div>
+        <div class="mt-5 text-center">
 
-                    <div class="col-xl-3 mt-3">
+            @unless (empty($downloadLink))
+                <img src="{{ $cover }}" class="img-fluid w-25" alt="">
+                <div class="row m-auto text-center border p-2 rounded mt-2">
+
+                    <div class="col-xl-4 mt-3">
                         <h6>{{ $artist }}</h6>
                     </div>
 
-                    <div class="col-xl-3 mt-3">
+                    <div class="col-xl-4 mt-3">
                         <h6>{{ $title }}</h6>
                     </div>
 
-                    <div class="col-xl-3 mt-2">
+                    <div class="col-xl-4 mt-2">
                         <a href="{{ $downloadLink }}" class="btn btn-outline-primary">Download</a>
                     </div>
                 </div>
             @endunless
 
-
+            {{-- https://open.spotify.com/track/1qBYSqIg90x6055vz3m3pF?si=dad3750f46174d23 --}}
         </div>
     </div>
 
+    <script>
+        async function pasteClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const spotifyUrlPattern = /https:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/;
+                if (spotifyUrlPattern.test(text)) {
+                    document.getElementById('spotify-url').value = text;
+                    document.getElementById('hidden-url').value = text;
+                    document.getElementById('spotify-form').submit();
+                } else {
+
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.onmouseenter = Swal.stopTimer;
+                            toast.onmouseleave = Swal.resumeTimer;
+                        }
+                    });
+                    Toast.fire({
+                        icon: "error",
+                        title: "Clipboard content is not a valid Spotify track URL"
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to read clipboard contents: ', err);
+            }
+        }
+    </script>
 </body>
 
 </html>
